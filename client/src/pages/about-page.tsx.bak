@@ -1,0 +1,819 @@
+import { Sidebar } from "@/components/sidebar";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription,
+  CardFooter 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  Target,
+  Calendar,
+  ListChecks,
+  LineChart,
+  Briefcase,
+  CheckCircle2,
+  Clock,
+  Award,
+  Rocket,
+  Users,
+  Flame,
+  BarChart2,
+  ArrowRight,
+  Brain,
+  BookOpen,
+  HeartPulse,
+  DollarSign,
+  GraduationCap,
+  Home,
+  Sparkles,
+  Lightbulb
+} from "lucide-react";
+import { Link } from "wouter";
+import { motion } from "framer-motion";
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.6 }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.7 }
+  }
+};
+
+export default function AboutPage() {
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row">
+      <Sidebar />
+      
+      <main className="flex-1 md:pl-64">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
+          <motion.div 
+            className="md:flex md:items-center md:justify-between mb-8"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-bold leading-tight text-gray-900 dark:text-gray-100 sm:text-4xl">
+                Example Workflows
+              </h1>
+              <p className="mt-2 text-lg text-gray-500 dark:text-gray-400">
+                Powerful ways to apply GoalQuest to different areas of your life
+              </p>
+            </div>
+          </motion.div>
+          
+          {/* Hero section */}
+          <motion.div 
+            className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            <motion.div 
+              className="absolute inset-0 opacity-30 bg-[radial-gradient(#fff_1px,transparent_1px)] bg-[size:24px_24px]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.3 }}
+              transition={{ duration: 1.5 }}
+            ></motion.div>
+            <div className="relative px-6 py-12 sm:px-12 sm:py-16 text-center">
+              <motion.h2 
+                className="text-3xl font-extrabold text-white sm:text-4xl"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <motion.span 
+                  className="block mb-1"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                >Success Blueprints</motion.span>
+                <motion.span 
+                  className="block"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
+                >For Any Goal</motion.span>
+              </motion.h2>
+              <motion.p 
+                className="mt-4 text-lg leading-6 text-indigo-100 max-w-2xl mx-auto"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+              >
+                Discover proven frameworks to achieve success in career advancement, personal development,
+                health transformation, financial growth, and more.
+              </motion.p>
+            </div>
+          </motion.div>
+          
+          {/* Career Growth Workflow */}
+          <motion.section 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-16"
+          >
+            <motion.div 
+              variants={itemVariants}
+              className="text-center mb-10"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
+                Career Growth Blueprint
+              </h2>
+              <p className="mt-2 text-lg text-gray-500 dark:text-gray-400">
+                Strategically advance your professional life with structured goal planning
+              </p>
+            </motion.div>
+            
+            <motion.div variants={cardVariants}>
+              <Card className="mb-8 hover:shadow-lg transition-shadow duration-300">
+                <CardHeader>
+                  <div className="flex items-center">
+                    <div className="bg-blue-100 dark:bg-blue-900/50 w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                      <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <CardTitle>Career Advancement Timeline</CardTitle>
+                      <CardDescription>From entry level to leadership in structured steps</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Long Term Goal Example */}
+                    <div className="border-l-4 border-purple-500 pl-4 py-2">
+                      <div className="flex items-center mb-2">
+                        <div className="bg-purple-100 dark:bg-purple-900/50 w-8 h-8 rounded-full flex items-center justify-center mr-3">
+                          <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium">Long-term Goal (1-2 years)</h3>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm">Secure Senior Management Position</p>
+                        </div>
+                      </div>
+                      
+                      {/* Medium Term Goals */}
+                      <div className="ml-11 mb-4 space-y-4">
+                        <div className="border-l-4 border-blue-500 pl-4 py-2">
+                          <div className="flex items-center mb-2">
+                            <div className="bg-blue-100 dark:bg-blue-900/50 w-7 h-7 rounded-full flex items-center justify-center mr-3">
+                              <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">Medium-term Goal (3-4 months)</h4>
+                              <p className="text-gray-600 dark:text-gray-400 text-sm">Lead a High-Impact Project</p>
+                            </div>
+                          </div>
+                          
+                          {/* Short Term Goals */}
+                          <div className="ml-10 space-y-3">
+                            <div className="border-l-4 border-amber-500 pl-4 py-2">
+                              <div className="flex items-center">
+                                <div className="bg-amber-100 dark:bg-amber-900/50 w-6 h-6 rounded-full flex items-center justify-center mr-3">
+                                  <Target className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <div>
+                                  <h5 className="font-medium text-sm">Short-term Goal (2-3 weeks)</h5>
+                                  <p className="text-gray-600 dark:text-gray-400 text-sm">Develop Project Proposal</p>
+                                </div>
+                              </div>
+                              
+                              {/* Tasks */}
+                              <div className="ml-9 mt-2 space-y-1.5">
+                                <div className="flex items-center">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                  <span className="text-sm">Research industry trends - Monday (morning)</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                  <span className="text-sm">Identify 3 pain points - Tuesday (afternoon)</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                  <span className="text-sm">Draft solution outline - Thursday (evening)</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                  <span className="text-sm">Create project timeline - Friday (morning)</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="border-l-4 border-amber-500 pl-4 py-2">
+                              <div className="flex items-center">
+                                <div className="bg-amber-100 dark:bg-amber-900/50 w-6 h-6 rounded-full flex items-center justify-center mr-3">
+                                  <Target className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <div>
+                                  <h5 className="font-medium text-sm">Short-term Goal (1 month)</h5>
+                                  <p className="text-gray-600 dark:text-gray-400 text-sm">Secure Executive Sponsorship</p>
+                                </div>
+                              </div>
+                              
+                              {/* Tasks sample */}
+                              <div className="ml-9 mt-2 space-y-1.5">
+                                <div className="flex items-center">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                  <span className="text-sm">Create executive summary deck</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                  <span className="text-sm">Schedule meetings with potential sponsors</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="border-l-4 border-blue-500 pl-4 py-2">
+                          <div className="flex items-center">
+                            <div className="bg-blue-100 dark:bg-blue-900/50 w-7 h-7 rounded-full flex items-center justify-center mr-3">
+                              <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">Medium-term Goal (2-3 months)</h4>
+                              <p className="text-gray-600 dark:text-gray-400 text-sm">Develop Leadership Skills</p>
+                            </div>
+                          </div>
+                          
+                          {/* Short Term Goals */}
+                          <div className="ml-10 mt-2 space-y-1.5">
+                            <div className="flex items-center">
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                              <span className="text-sm">Complete leadership training course</span>
+                            </div>
+                            <div className="flex items-center">
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                              <span className="text-sm">Find a mentor within the organization</span>
+                            </div>
+                            <div className="flex items-center">
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                              <span className="text-sm">Practice public speaking at team meetings</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg">
+                      <div className="text-center">
+                        <h3 className="font-medium mb-2">Key Benefits</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div className="flex flex-col items-center">
+                            <div className="bg-indigo-100 dark:bg-indigo-900/50 w-10 h-10 rounded-full flex items-center justify-center mb-2">
+                              <Rocket className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                            </div>
+                            <span>Focused Progress</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="bg-blue-100 dark:bg-blue-900/50 w-10 h-10 rounded-full flex items-center justify-center mb-2">
+                              <LineChart className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <span>Measurable Growth</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="bg-amber-100 dark:bg-amber-900/50 w-10 h-10 rounded-full flex items-center justify-center mb-2">
+                              <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <span>Strategic Thinking</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="bg-purple-100 dark:bg-purple-900/50 w-10 h-10 rounded-full flex items-center justify-center mb-2">
+                              <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <span>Visibility to Leaders</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.section>
+          
+          {/* Personal Development Workflow */}
+          <motion.section 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-16"
+          >
+            <motion.div 
+              variants={itemVariants}
+              className="text-center mb-10"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
+                Personal Growth Blueprint
+              </h2>
+              <p className="mt-2 text-lg text-gray-500 dark:text-gray-400">
+                Cultivate your mindset, habits, and skills for holistic development
+              </p>
+            </motion.div>
+            
+            <motion.div variants={cardVariants}>
+              <Card className="mb-8 hover:shadow-lg transition-shadow duration-300">
+                <CardHeader>
+                  <div className="flex items-center">
+                    <div className="bg-purple-100 dark:bg-purple-900/50 w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                      <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <CardTitle>Continuous Learning Approach</CardTitle>
+                      <CardDescription>Personal mastery through structured skill development</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-5 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="relative mb-6">
+                          <div className="w-20 h-20 rounded-full bg-purple-200 dark:bg-purple-800 flex items-center justify-center">
+                            <BookOpen className="h-10 w-10 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1">
+                            <div className="bg-purple-500 rounded-full w-6 h-6 flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">1</span>
+                            </div>
+                          </div>
+                        </div>
+                        <h3 className="font-medium mb-2">Learn New Skill</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Set specific learning goals with defined outcomes</p>
+                      </div>
+                      
+                      <div className="flex flex-col items-center text-center">
+                        <div className="relative mb-6">
+                          <div className="w-20 h-20 rounded-full bg-purple-200 dark:bg-purple-800 flex items-center justify-center">
+                            <Clock className="h-10 w-10 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1">
+                            <div className="bg-purple-500 rounded-full w-6 h-6 flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">2</span>
+                            </div>
+                          </div>
+                        </div>
+                        <h3 className="font-medium mb-2">Practice Consistently</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Create a schedule with daily practices</p>
+                      </div>
+                      
+                      <div className="flex flex-col items-center text-center">
+                        <div className="relative mb-6">
+                          <div className="w-20 h-20 rounded-full bg-purple-200 dark:bg-purple-800 flex items-center justify-center">
+                            <Sparkles className="h-10 w-10 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1">
+                            <div className="bg-purple-500 rounded-full w-6 h-6 flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">3</span>
+                            </div>
+                          </div>
+                        </div>
+                        <h3 className="font-medium mb-2">Apply & Master</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Use your skills in real-world projects</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Example Goal Structure */}
+                  <div className="space-y-6">
+                    {/* Long Term Goal Example */}
+                    <div className="border-l-4 border-purple-500 pl-4 py-2">
+                      <div className="flex items-center mb-2">
+                        <div className="bg-purple-100 dark:bg-purple-900/50 w-8 h-8 rounded-full flex items-center justify-center mr-3">
+                          <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium">Long-term Goal (6 months)</h3>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm">Master a New Language (Spanish)</p>
+                        </div>
+                      </div>
+                      
+                      {/* Medium Term Goals */}
+                      <div className="ml-11 space-y-4">
+                        <div className="border-l-4 border-blue-500 pl-4 py-2">
+                          <div className="flex items-center mb-2">
+                            <div className="bg-blue-100 dark:bg-blue-900/50 w-7 h-7 rounded-full flex items-center justify-center mr-3">
+                              <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">Medium-term Goal (2 months)</h4>
+                              <p className="text-gray-600 dark:text-gray-400 text-sm">Complete Beginner to Intermediate Course</p>
+                            </div>
+                          </div>
+                          
+                          {/* Short Term Goals */}
+                          <div className="ml-10 space-y-3">
+                            <div className="border-l-4 border-amber-500 pl-4 py-2">
+                              <div className="flex items-center">
+                                <div className="bg-amber-100 dark:bg-amber-900/50 w-6 h-6 rounded-full flex items-center justify-center mr-3">
+                                  <Target className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <div>
+                                  <h5 className="font-medium text-sm">Short-term Goal (3 weeks)</h5>
+                                  <p className="text-gray-600 dark:text-gray-400 text-sm">Master 500 Common Words</p>
+                                </div>
+                              </div>
+                              
+                              {/* Tasks */}
+                              <div className="ml-9 mt-2 space-y-1.5">
+                                <div className="flex items-center">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                  <span className="text-sm">Learn 25 new words - Daily (morning)</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                  <span className="text-sm">Review previous day's words - Daily (evening)</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                  <span className="text-sm">Create flashcards for difficult words - Weekly</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.section>
+          
+          {/* Fitness Workflow */}
+          <motion.section 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-16"
+          >
+            <motion.div 
+              variants={itemVariants}
+              className="text-center mb-10"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
+                Health Transformation Blueprint
+              </h2>
+              <p className="mt-2 text-lg text-gray-500 dark:text-gray-400">
+                Achieve your fitness goals with measurable milestones and consistent habits
+              </p>
+            </motion.div>
+            
+            <motion.div variants={cardVariants}>
+              <Card className="mb-8 hover:shadow-lg transition-shadow duration-300">
+                <CardHeader>
+                  <div className="flex items-center">
+                    <div className="bg-green-100 dark:bg-green-900/50 w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                      <HeartPulse className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <CardTitle>Fitness Transformation System</CardTitle>
+                      <CardDescription>Progressive approach to achieving optimal health</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-5">
+                      <div className="flex items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <div className="bg-green-100 dark:bg-green-800 rounded-full p-2 mr-4">
+                          <Target className="h-6 w-6 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-green-800 dark:text-green-300">Long-term Goal (6 months)</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Complete a Half Marathon</p>
+                        </div>
+                      </div>
+                      
+                      <div className="relative ml-6 pl-6 border-l-2 border-dashed border-green-300 dark:border-green-700">
+                        <div className="absolute top-0 left-0 -translate-x-1/2 mt-3">
+                          <div className="bg-green-500 rounded-full w-4 h-4"></div>
+                        </div>
+                        <div className="rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+                          <h4 className="font-medium mb-1 text-green-700 dark:text-green-400">Month 1-2 Goal</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Build 5K Running Base</p>
+                          <div className="mt-3 space-y-2">
+                            <div className="flex items-center text-sm">
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                              <span>Run 3x weekly - Mon/Wed/Sat (morning)</span>
+                            </div>
+                            <div className="flex items-center text-sm">
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                              <span>Strength training 2x weekly - Tue/Thu</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="relative ml-6 pl-6 border-l-2 border-dashed border-green-300 dark:border-green-700">
+                        <div className="absolute top-0 left-0 -translate-x-1/2 mt-3">
+                          <div className="bg-green-500 rounded-full w-4 h-4"></div>
+                        </div>
+                        <div className="rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+                          <h4 className="font-medium mb-1 text-green-700 dark:text-green-400">Month 3-4 Goal</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Build to 10K Distance</p>
+                          <div className="mt-3 space-y-2">
+                            <div className="flex items-center text-sm">
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                              <span>Increase long run by 10% weekly</span>
+                            </div>
+                            <div className="flex items-center text-sm">
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                              <span>Add one interval session weekly</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="relative ml-6 pl-6">
+                        <div className="absolute top-0 left-0 -translate-x-1/2 mt-3">
+                          <div className="bg-green-500 rounded-full w-4 h-4"></div>
+                        </div>
+                        <div className="rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+                          <h4 className="font-medium mb-1 text-green-700 dark:text-green-400">Month 5-6 Goal</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Half Marathon Training</p>
+                          <div className="mt-3 space-y-2">
+                            <div className="flex items-center text-sm">
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                              <span>Follow specific half marathon plan</span>
+                            </div>
+                            <div className="flex items-center text-sm">
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                              <span>Register for half marathon event</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col space-y-4">
+                      <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-5">
+                        <h3 className="font-medium text-green-800 dark:text-green-300 mb-3">Weekly Schedule Example</h3>
+                        <div className="space-y-3">
+                          <div className="flex">
+                            <div className="w-24 font-medium text-gray-600 dark:text-gray-400 text-sm">Monday</div>
+                            <div className="flex-1 text-sm">Easy run + mobility work (morning)</div>
+                          </div>
+                          <div className="flex">
+                            <div className="w-24 font-medium text-gray-600 dark:text-gray-400 text-sm">Tuesday</div>
+                            <div className="flex-1 text-sm">Strength training (evening)</div>
+                          </div>
+                          <div className="flex">
+                            <div className="w-24 font-medium text-gray-600 dark:text-gray-400 text-sm">Wednesday</div>
+                            <div className="flex-1 text-sm">Interval training (morning)</div>
+                          </div>
+                          <div className="flex">
+                            <div className="w-24 font-medium text-gray-600 dark:text-gray-400 text-sm">Thursday</div>
+                            <div className="flex-1 text-sm">Strength training (evening)</div>
+                          </div>
+                          <div className="flex">
+                            <div className="w-24 font-medium text-gray-600 dark:text-gray-400 text-sm">Friday</div>
+                            <div className="flex-1 text-sm">Rest day</div>
+                          </div>
+                          <div className="flex">
+                            <div className="w-24 font-medium text-gray-600 dark:text-gray-400 text-sm">Saturday</div>
+                            <div className="flex-1 text-sm">Long run (morning)</div>
+                          </div>
+                          <div className="flex">
+                            <div className="w-24 font-medium text-gray-600 dark:text-gray-400 text-sm">Sunday</div>
+                            <div className="flex-1 text-sm">Active recovery (walk/yoga)</div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-lg p-5">
+                        <h3 className="font-medium text-green-800 dark:text-green-300 mb-3">Key Benefits</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="flex items-center">
+                            <div className="bg-green-100 dark:bg-green-800 rounded-full p-1 mr-2">
+                              <Flame className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            </div>
+                            <span className="text-sm">Improved Energy</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="bg-green-100 dark:bg-green-800 rounded-full p-1 mr-2">
+                              <Target className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            </div>
+                            <span className="text-sm">Goal Achievement</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="bg-green-100 dark:bg-green-800 rounded-full p-1 mr-2">
+                              <HeartPulse className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            </div>
+                            <span className="text-sm">Better Health</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="bg-green-100 dark:bg-green-800 rounded-full p-1 mr-2">
+                              <Award className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            </div>
+                            <span className="text-sm">Mental Strength</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.section>
+          
+          {/* Other Example Workflows */}
+          <motion.section 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-16"
+          >
+            <motion.div 
+              variants={itemVariants}
+              className="text-center mb-10"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
+                More Blueprint Areas
+              </h2>
+              <p className="mt-2 text-lg text-gray-500 dark:text-gray-400">
+                Explore additional frameworks for different life areas
+              </p>
+            </motion.div>
+            
+            <motion.div 
+              className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+              variants={containerVariants}
+            >
+              <motion.div variants={itemVariants}>
+                <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <div className="bg-amber-100 dark:bg-amber-900/50 w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                        <DollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <CardTitle>Financial Freedom</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      Build wealth through a structured approach to saving, investing, and growing multiple income streams.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-amber-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm">Emergency Fund Building</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-amber-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm">Debt Elimination Strategy</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-amber-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm">Investment Portfolio Growth</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button variant="outline" className="w-full" size="sm">
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      Apply Blueprint
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+              
+              <motion.div variants={itemVariants}>
+                <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <div className="bg-blue-100 dark:bg-blue-900/50 w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                        <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <CardTitle>Educational Growth</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      Accelerate professional qualifications and skill development through structured learning paths.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm">Degree Completion</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm">Industry Certification</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm">Specialized Skill Mastery</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button variant="outline" className="w-full" size="sm">
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      Apply Blueprint
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+              
+              <motion.div variants={itemVariants}>
+                <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <div className="bg-indigo-100 dark:bg-indigo-900/50 w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                        <Home className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <CardTitle>Home Projects</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      Transform your living space with achievable home improvement and organization goals.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-indigo-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm">Room Renovations</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-indigo-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm">Decluttering System</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-indigo-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm">Garden & Outdoor Spaces</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button variant="outline" className="w-full" size="sm">
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      Apply Blueprint
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </motion.section>
+          
+          {/* Call to Action */}
+          <motion.section 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-10"
+          >
+            <div className="text-center">
+              <motion.h3 
+                variants={itemVariants}
+                className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3"
+              >
+                Ready to Start Your Goal Journey?
+              </motion.h3>
+              <motion.p 
+                variants={itemVariants}
+                className="max-w-2xl mx-auto text-gray-600 dark:text-gray-400 mb-6"
+              >
+                Begin with one of these blueprints or create your own custom goal structure.
+                GoalQuest's flexible system adapts to your unique needs and aspirations.
+              </motion.p>
+              <motion.div variants={itemVariants}>
+                <Link to="/goal-creation-new">
+                  <Button size="lg" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
+                    Create Your First Goal
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </motion.div>
+            </div>
+          </motion.section>
+        </div>
+      </main>
+    </div>
+  );
+}
