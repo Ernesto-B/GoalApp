@@ -1,0 +1,935 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { setupAuth } from "./auth";
+import { storage } from "./storage";
+import { db } from "@db";
+import { tasks, goals, userStats, userPreferences, goalTypeEnum } from "@shared/schema";
+import { eq, and, desc, isNull, inArray, gte, lte, sql } from "drizzle-orm";
+import { z } from "zod";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // sets up /api/register, /api/login, /api/logout, /api/user
+  setupAuth(app);
+
+  // Get all goals for the current user
+  app.get("/api/goals", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    try {
+      // Filter out archived goals by default
+      const userGoals = await db.query.goals.findMany({
+        where: and(
+          eq(goals.userId, req.user.id),
+          eq(goals.isArchived, false) // Only get non-archived goals
+        ),
+        orderBy: [desc(goals.createdAt)],
+      });
+      res.json(userGoals);
+    } catch (error) {
+      console.error("Error fetching goals:", error);
+      res.status(500).json({ message: "Failed to fetch goals" });
+    }
+  });
+
+  // Get archived goals for the user
+  app.get("/api/goals/archived", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    try {
+      const archivedGoals = await db.query.goals.findMany({
+        where: and(
+          eq(goals.userId, req.user.id),
+          eq(goals.isArchived, true)
+        ),
+        orderBy: [desc(goals.archivedAt)],
+      });
+
+      res.json(archivedGoals);
+    } catch (error) {
+      console.error("Error fetching archived goals:", error);
+      res.status(500).json({ message: "Failed to fetch archived goals" });
+    }
+  });
+
+  // Get a specific goal
+  app.get("/api/goals/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const goalId = parseInt(req.params.id);
+    if (isNaN(goalId)) {
+      return res.status(400).json({ message: "Invalid goal ID" });
+    }
+
+    try {
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, goalId),
+          eq(goals.userId, req.user.id)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+
+      res.json(goal);
+    } catch (error) {
+      console.error("Error fetching goal:", error);
+      res.status(500).json({ message: "Failed to fetch goal" });
+    }
+  });
+
+  // Create a new goal
+  app.post("/api/goals", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    // Validate goal type
+    const goalTypeSchema = z.enum(["short", "medium", "long"]);
+    const goalSchema = z.object({
+      title: z.string().min(1, "Title is required"),
+      description: z.string().optional().nullable(),
+      type: goalTypeSchema,
+      deadline: z.string().or(z.date()),
+      isPublic: z.boolean().default(false),
+    });
+
+    try {
+      const validatedData = goalSchema.parse(req.body);
+      
+      // Count user's active goals of this type (not completed, not archived)
+      const goalsOfType = await db.query.goals.findMany({
+        where: and(
+          eq(goals.userId, req.user.id),
+          eq(goals.type, validatedData.type),
+          eq(goals.isCompleted, false),
+          eq(goals.isArchived, false)
+        ),
+      });
+
+      // Check if user has reached the maximum number of goals for this type
+      const maxGoals = 3; // 3 goals per type (short, medium, long)
+      if (goalsOfType.length >= maxGoals) {
+        return res.status(400).json({
+          message: `You can only have a maximum of ${maxGoals} active ${validatedData.type}-term goals`
+        });
+      }
+
+      // Create the new goal
+      const [newGoal] = await db.insert(goals).values({
+        title: validatedData.title,
+        description: validatedData.description,
+        type: validatedData.type,
+        userId: req.user.id,
+        deadline: new Date(validatedData.deadline),
+        isPublic: validatedData.isPublic,
+      }).returning();
+
+      res.status(201).json(newGoal);
+    } catch (error) {
+      console.error("Error creating goal:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create goal" });
+    }
+  });
+
+  // Update a goal
+  app.patch("/api/goals/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const goalId = parseInt(req.params.id);
+    if (isNaN(goalId)) {
+      return res.status(400).json({ message: "Invalid goal ID" });
+    }
+
+    // Validate update data
+    const updateSchema = z.object({
+      title: z.string().min(1, "Title is required").optional(),
+      description: z.string().optional().nullable(),
+      deadline: z.string().optional(),
+    });
+
+    try {
+      const validatedData = updateSchema.parse(req.body);
+      
+      // Check if goal exists and belongs to the user
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, goalId),
+          eq(goals.userId, req.user.id)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+
+      if (goal.isCompleted) {
+        return res.status(400).json({ message: "Completed goals cannot be edited" });
+      }
+
+      if (goal.isArchived) {
+        return res.status(400).json({ message: "Archived goals cannot be edited" });
+      }
+
+      // Prepare update data
+      const updateData: Record<string, any> = {};
+      if (validatedData.title) updateData.title = validatedData.title;
+      if (validatedData.description !== undefined) updateData.description = validatedData.description;
+      if (validatedData.deadline) updateData.deadline = new Date(validatedData.deadline);
+
+      // Update the goal
+      const [updatedGoal] = await db.update(goals)
+        .set(updateData)
+        .where(eq(goals.id, goalId))
+        .returning();
+
+      res.json(updatedGoal);
+    } catch (error) {
+      console.error("Error updating goal:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid goal data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update goal" });
+    }
+  });
+
+  // Mark a goal as completed
+  app.patch("/api/goals/:id/complete", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const goalId = parseInt(req.params.id);
+    if (isNaN(goalId)) {
+      return res.status(400).json({ message: "Invalid goal ID" });
+    }
+
+    try {
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, goalId),
+          eq(goals.userId, req.user.id)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+
+      // Update the goal
+      const [updatedGoal] = await db.update(goals)
+        .set({
+          isCompleted: true,
+          completedAt: new Date(),
+          reflection: req.body.reflection,
+        })
+        .where(eq(goals.id, goalId))
+        .returning();
+
+      // Update user stats
+      const userStat = await db.query.userStats.findFirst({
+        where: eq(userStats.userId, req.user.id),
+      });
+
+      if (userStat) {
+        await db.update(userStats)
+          .set({
+            goalsCompleted: userStat.goalsCompleted + 1,
+            achieverScore: userStat.achieverScore + 10, // Increase achiever score
+            lastUpdated: new Date(),
+          })
+          .where(eq(userStats.userId, req.user.id));
+      }
+
+      res.json(updatedGoal);
+    } catch (error) {
+      console.error("Error completing goal:", error);
+      res.status(500).json({ message: "Failed to complete goal" });
+    }
+  });
+
+  // Archive a goal
+  app.patch("/api/goals/:id/archive", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const goalId = parseInt(req.params.id);
+    if (isNaN(goalId)) {
+      return res.status(400).json({ message: "Invalid goal ID" });
+    }
+
+    try {
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, goalId),
+          eq(goals.userId, req.user.id)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+
+      // Update the goal
+      const [updatedGoal] = await db.update(goals)
+        .set({
+          isArchived: true,
+          archivedAt: new Date(),
+        })
+        .where(eq(goals.id, goalId))
+        .returning();
+
+      res.json(updatedGoal);
+    } catch (error) {
+      console.error("Error archiving goal:", error);
+      res.status(500).json({ message: "Failed to archive goal" });
+    }
+  });
+
+  // Unarchive a goal
+  app.patch("/api/goals/:id/unarchive", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const goalId = parseInt(req.params.id);
+    if (isNaN(goalId)) {
+      return res.status(400).json({ message: "Invalid goal ID" });
+    }
+
+    try {
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, goalId),
+          eq(goals.userId, req.user.id),
+          eq(goals.isArchived, true)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(404).json({ message: "Archived goal not found" });
+      }
+
+      // Update the goal
+      const [updatedGoal] = await db.update(goals)
+        .set({
+          isArchived: false,
+          archivedAt: null,
+        })
+        .where(eq(goals.id, goalId))
+        .returning();
+
+      res.json(updatedGoal);
+    } catch (error) {
+      console.error("Error unarchiving goal:", error);
+      res.status(500).json({ message: "Failed to unarchive goal" });
+    }
+  });
+
+  // Toggle goal public/private status
+  app.patch("/api/goals/:id/toggle-public", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const goalId = parseInt(req.params.id);
+    if (isNaN(goalId)) {
+      return res.status(400).json({ message: "Invalid goal ID" });
+    }
+
+    try {
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, goalId),
+          eq(goals.userId, req.user.id)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+
+      // Toggle the public status
+      const [updatedGoal] = await db.update(goals)
+        .set({
+          isPublic: !goal.isPublic,
+        })
+        .where(eq(goals.id, goalId))
+        .returning();
+
+      // If the goal is newly public and completed, update user stats
+      if (updatedGoal.isPublic && !goal.isPublic && updatedGoal.isCompleted) {
+        const userStat = await db.query.userStats.findFirst({
+          where: eq(userStats.userId, req.user.id),
+        });
+
+        if (userStat) {
+          await db.update(userStats)
+            .set({
+              goalsShared: userStat.goalsShared + 1,
+              motivatorScore: userStat.motivatorScore + 5, // Increase motivator score
+              lastUpdated: new Date(),
+            })
+            .where(eq(userStats.userId, req.user.id));
+        }
+      }
+
+      res.json(updatedGoal);
+    } catch (error) {
+      console.error("Error toggling goal public status:", error);
+      res.status(500).json({ message: "Failed to update goal" });
+    }
+  });
+
+  // Get tasks for a specific goal
+  app.get("/api/goals/:id/tasks", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const goalId = parseInt(req.params.id);
+    if (isNaN(goalId)) {
+      return res.status(400).json({ message: "Invalid goal ID" });
+    }
+
+    try {
+      // First verify that the goal belongs to the user
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, goalId),
+          eq(goals.userId, req.user.id)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+
+      // Get tasks for the goal
+      const goalTasks = await db.query.tasks.findMany({
+        where: eq(tasks.goalId, goalId),
+        orderBy: [desc(tasks.scheduledDate)],
+      });
+
+      res.json(goalTasks);
+    } catch (error) {
+      console.error("Error fetching tasks for goal:", error);
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  // Get all tasks for the current user
+  app.get("/api/tasks", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    try {
+      // Get all non-archived goals for the user
+      const userGoals = await db.query.goals.findMany({
+        where: and(
+          eq(goals.userId, req.user.id),
+          eq(goals.isArchived, false) // Only get tasks for non-archived goals
+        ),
+      });
+
+      const goalIds = userGoals.map(g => g.id);
+
+      if (goalIds.length === 0) {
+        return res.json([]);
+      }
+
+      // Get all tasks for these goals
+      const userTasks = await db.query.tasks.findMany({
+        where: inArray(tasks.goalId, goalIds),
+        orderBy: [desc(tasks.scheduledDate)],
+      });
+
+      res.json(userTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+  });
+
+  // Create a new task
+  app.post("/api/tasks", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const taskSchema = z.object({
+      title: z.string().min(1, "Title is required"),
+      description: z.string().optional().nullable(),
+      goalId: z.number({
+        required_error: "Goal ID is required",
+        invalid_type_error: "Goal ID must be a number"
+      }),
+      scheduledDate: z.string().or(z.date()),
+      // Repeating task fields
+      isRepeating: z.boolean().default(false),
+      repeatType: z.enum(["none", "daily", "every_other_day", "weekly", "monthly"]).default("none"),
+      repeatUntil: z.string().or(z.date()).nullable().optional(),
+    });
+
+    try {
+      const validatedData = taskSchema.parse(req.body);
+      
+      // Verify that the goal exists, belongs to the user, and is not archived
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, validatedData.goalId),
+          eq(goals.userId, req.user.id),
+          eq(goals.isArchived, false)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found or is archived" });
+      }
+
+      // Check if the user has reached the maximum number of tasks for this day and goal
+      const scheduledDate = new Date(validatedData.scheduledDate);
+      const startOfDay = new Date(scheduledDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(scheduledDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      // Simply get all tasks for this goal
+      const allTasksForGoal = await db.query.tasks.findMany({
+        where: eq(tasks.goalId, validatedData.goalId),
+      });
+      
+      // Filter tasks for this day using JavaScript
+      const tasksForDay = allTasksForGoal.filter(task => {
+        const taskDate = new Date(task.scheduledDate);
+        return taskDate >= startOfDay && taskDate <= endOfDay;
+      });
+
+      // Check if user has reached the maximum number of tasks per day per goal
+      const maxTasksPerDayPerGoal = 5;
+      if (tasksForDay.length >= maxTasksPerDayPerGoal) {
+        return res.status(400).json({
+          message: `You can only have a maximum of ${maxTasksPerDayPerGoal} tasks per day per goal`
+        });
+      }
+
+      // Handle repeating tasks
+      if (validatedData.isRepeating && validatedData.repeatUntil) {
+        const isRepeating = validatedData.isRepeating;
+        const repeatType = validatedData.repeatType;
+        const repeatUntil = new Date(validatedData.repeatUntil);
+        
+        // Create the parent task first
+        const [parentTask] = await db.insert(tasks).values({
+          title: validatedData.title,
+          description: validatedData.description,
+          goalId: validatedData.goalId,
+          scheduledDate: new Date(validatedData.scheduledDate),
+          isRepeating,
+          repeatType,
+          repeatUntil,
+        }).returning();
+        
+        // Generate the repeating task instances
+        let nextDate = new Date(scheduledDate);
+        const taskInstances = [];
+        
+        // Calculate next date based on repeat type
+        const getNextDate = (currentDate: Date, type: string): Date => {
+          const nextDate = new Date(currentDate);
+          switch (type) {
+            case "daily":
+              nextDate.setDate(nextDate.getDate() + 1);
+              break;
+            case "every_other_day":
+              nextDate.setDate(nextDate.getDate() + 2);
+              break;
+            case "weekly":
+              nextDate.setDate(nextDate.getDate() + 7);
+              break;
+            case "monthly":
+              nextDate.setMonth(nextDate.getMonth() + 1);
+              break;
+            default:
+              nextDate.setDate(nextDate.getDate() + 1);
+          }
+          return nextDate;
+        };
+        
+        // Generate tasks until repeatUntil date
+        while (true) {
+          nextDate = getNextDate(nextDate, repeatType);
+          
+          // Stop if we've reached the end date
+          if (nextDate > repeatUntil) {
+            break;
+          }
+          
+          // Create instance data
+          taskInstances.push({
+            title: validatedData.title,
+            description: validatedData.description,
+            goalId: validatedData.goalId,
+            scheduledDate: new Date(nextDate),
+            isRepeating: false, // Child instances aren't themselves repeating
+            repeatType: "none" as const, // Using as const to specify the enum value
+            parentTaskId: parentTask.id, // Reference to parent task
+          });
+        }
+        
+        // Insert all task instances if there are any
+        if (taskInstances.length > 0) {
+          await db.insert(tasks).values(taskInstances);
+        }
+        
+        res.status(201).json(parentTask);
+      } else {
+        // Create a regular non-repeating task
+        const [newTask] = await db.insert(tasks).values({
+          title: validatedData.title,
+          description: validatedData.description,
+          goalId: validatedData.goalId,
+          scheduledDate: new Date(validatedData.scheduledDate),
+          isRepeating: false,
+          repeatType: "none" as const, // Using as const to specify the enum value
+        }).returning();
+
+        res.status(201).json(newTask);
+      }
+    } catch (error) {
+      console.error("Error creating task:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create task" });
+    }
+  });
+
+  // Mark a task as completed
+  app.patch("/api/tasks/:id/complete", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const taskId = parseInt(req.params.id);
+    if (isNaN(taskId)) {
+      return res.status(400).json({ message: "Invalid task ID" });
+    }
+
+    try {
+      const task = await db.query.tasks.findFirst({
+        where: eq(tasks.id, taskId),
+      });
+
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      // Verify that the task belongs to a goal owned by the user and is not archived
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, task.goalId),
+          eq(goals.userId, req.user.id),
+          eq(goals.isArchived, false)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(403).json({ message: "You don't have permission to update this task or the goal is archived" });
+      }
+
+      // Mark the task as completed
+      const [updatedTask] = await db.update(tasks)
+        .set({
+          isCompleted: true,
+          completedAt: new Date(),
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+
+      // Update user stats
+      const userStat = await db.query.userStats.findFirst({
+        where: eq(userStats.userId, req.user.id),
+      });
+
+      if (userStat) {
+        // Update tasks completed count
+        let tasksCompleted = userStat.tasksCompleted + 1;
+        
+        // Update streak calculations
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const lastUpdated = userStat.lastUpdated ? new Date(userStat.lastUpdated) : null;
+        if (lastUpdated) {
+          lastUpdated.setHours(0, 0, 0, 0);
+        }
+        
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        let currentStreak = userStat.currentStreak;
+        
+        // If this is the first task completed or last update was today
+        if (!lastUpdated || (lastUpdated && lastUpdated.getTime() === today.getTime())) {
+          // Keep the same streak (already updated for today)
+        }
+        // If the last update was yesterday, continue the streak
+        else if (lastUpdated.getTime() === yesterday.getTime()) {
+          currentStreak += 1;
+        } 
+        // If the last update was before yesterday, start a new streak
+        else if (lastUpdated.getTime() < yesterday.getTime()) {
+          currentStreak = 1;
+        }
+        
+        // Update longest streak if current streak is longer
+        const longestStreak = Math.max(userStat.longestStreak, currentStreak);
+        
+        // Update tenacity score based on streak
+        const tenacityScore = userStat.tenacityScore + 1;
+        
+        // Update consistency score
+        const consistencyScore = userStat.consistencyScore + 1;
+        
+        await db.update(userStats)
+          .set({
+            tasksCompleted,
+            currentStreak,
+            longestStreak,
+            tenacityScore,
+            consistencyScore,
+            lastUpdated: new Date(),
+          })
+          .where(eq(userStats.userId, req.user.id));
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error completing task:", error);
+      res.status(500).json({ message: "Failed to complete task" });
+    }
+  });
+  
+  // Endpoint to undo task completion
+  app.patch("/api/tasks/:id/uncomplete", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const taskId = parseInt(req.params.id);
+    if (isNaN(taskId)) {
+      return res.status(400).json({ message: "Invalid task ID" });
+    }
+
+    try {
+      const task = await db.query.tasks.findFirst({
+        where: eq(tasks.id, taskId),
+      });
+
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      // Verify that the task belongs to a goal owned by the user and is not archived
+      const goal = await db.query.goals.findFirst({
+        where: and(
+          eq(goals.id, task.goalId),
+          eq(goals.userId, req.user.id),
+          eq(goals.isArchived, false)
+        ),
+      });
+
+      if (!goal) {
+        return res.status(403).json({ message: "You don't have permission to update this task or the goal is archived" });
+      }
+
+      // Make sure task is actually completed before trying to uncomplete it
+      if (!task.isCompleted) {
+        return res.status(400).json({ message: "Task is not completed" });
+      }
+
+      // Mark the task as not completed
+      const [updatedTask] = await db.update(tasks)
+        .set({
+          isCompleted: false,
+          completedAt: null,
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+
+      // Update user stats
+      const userStat = await db.query.userStats.findFirst({
+        where: eq(userStats.userId, req.user.id),
+      });
+
+      if (userStat && userStat.tasksCompleted > 0) {
+        // Decrement tasks completed count
+        let tasksCompleted = userStat.tasksCompleted - 1;
+        
+        // We'll reduce tenacity and consistency scores slightly
+        const tenacityScore = Math.max(0, userStat.tenacityScore - 1);
+        const consistencyScore = Math.max(0, userStat.consistencyScore - 1);
+        
+        // Note: We don't modify the streak here as it would be complex to recalculate
+        // Ideally, we would need to check if there are other completed tasks today
+        // For simplicity, we keep the streak intact
+        
+        await db.update(userStats)
+          .set({
+            tasksCompleted,
+            tenacityScore,
+            consistencyScore,
+            lastUpdated: new Date(),
+          })
+          .where(eq(userStats.userId, req.user.id));
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error uncompleting task:", error);
+      res.status(500).json({ message: "Failed to uncomplete task" });
+    }
+  });
+
+  // Get user stats
+  app.get("/api/user/stats", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    try {
+      const stats = await db.query.userStats.findFirst({
+        where: eq(userStats.userId, req.user.id),
+      });
+
+      if (!stats) {
+        // Create initial stats if they don't exist
+        const [newStats] = await db.insert(userStats).values({
+          userId: req.user.id,
+          longestStreak: 0,
+          currentStreak: 0,
+          goalsCompleted: 0,
+          goalsShared: 0,
+          tasksCompleted: 0,
+          tenacityScore: 0,
+          achieverScore: 0,
+          motivatorScore: 0,
+          consistencyScore: 0,
+        }).returning();
+        
+        return res.json(newStats);
+      }
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ message: "Failed to fetch user stats" });
+    }
+  });
+  
+  // Get user preferences
+  app.get("/api/user/preferences", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    try {
+      const preferences = await db.query.userPreferences.findFirst({
+        where: eq(userPreferences.userId, req.user.id),
+      });
+
+      if (!preferences) {
+        // Create default preferences if they don't exist
+        const [newPreferences] = await db.insert(userPreferences).values({
+          userId: req.user.id,
+          showTimeOfDayDividers: true,
+          defaultCalendarView: "week",
+          theme: "system",
+        }).returning();
+        
+        return res.json(newPreferences);
+      }
+
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching user preferences:", error);
+      res.status(500).json({ message: "Failed to fetch user preferences" });
+    }
+  });
+  
+  // Update user preferences
+  app.patch("/api/user/preferences", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    try {
+      // Validate input data
+      const allowedFields = ["showTimeOfDayDividers", "defaultCalendarView", "theme"];
+      const updateData: Record<string, any> = {};
+      
+      allowedFields.forEach(field => {
+        if (field in req.body) {
+          updateData[field] = req.body[field];
+        }
+      });
+      
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "No valid fields to update" });
+      }
+      
+      // Add updatedAt timestamp
+      updateData.updatedAt = new Date();
+      
+      // Find existing preferences
+      const existingPrefs = await db.query.userPreferences.findFirst({
+        where: eq(userPreferences.userId, req.user.id),
+      });
+      
+      let result;
+      
+      if (existingPrefs) {
+        // Update existing preferences
+        const [updated] = await db.update(userPreferences)
+          .set(updateData)
+          .where(eq(userPreferences.userId, req.user.id))
+          .returning();
+          
+        result = updated;
+      } else {
+        // Create new preferences if they don't exist
+        const [newPrefs] = await db.insert(userPreferences).values({
+          userId: req.user.id,
+          ...updateData,
+        }).returning();
+        
+        result = newPrefs;
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating user preferences:", error);
+      res.status(500).json({ message: "Failed to update user preferences" });
+    }
+  });
+
+  const httpServer = createServer(app);
+
+  return httpServer;
+}
